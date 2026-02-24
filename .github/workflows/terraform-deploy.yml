@@ -52,6 +52,16 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
       
+      - name: Package Lambda Code
+        working-directory: .
+        run: |
+          echo "📦 Creating Lambda deployment package..."
+          pip install -r requirements.txt -t ./lambda_package
+          cp *.py ./lambda_package/
+          cd lambda_package
+          zip -r ../infra/lambda.zip .
+          echo "✅ Lambda package created: $(ls -lh ../infra/lambda.zip)"
+      
       - name: Terraform Format Check
         id: fmt
         run: terraform fmt -check -recursive
@@ -106,20 +116,13 @@ jobs:
           TF_VAR_alarm_email: ${{ secrets.ALARM_EMAIL }}
         run: terraform apply -auto-approve tfplan
       
-      - name: Package Lambda
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        working-directory: .
-        run: |
-          pip install -r requirements.txt -t ./lambda_package
-          cp *.py ./lambda_package/
-          cd lambda_package
-          zip -r ../infra/lambda.zip .
-      
       - name: Update Lambda Functions
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           CHAT_FUNCTION=$(terraform output -raw chat_lambda_name)
           INGEST_FUNCTION=$(terraform output -raw ingest_lambda_name)
+          
+          echo "🔄 Updating Lambda functions..."
           
           aws lambda update-function-code \
             --function-name $CHAT_FUNCTION \
