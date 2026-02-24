@@ -47,7 +47,7 @@ iam:
 # Bedrock Configuration
 bedrock:
   embedding_model: amazon.titan-embed-text-v1
-  chat_model: anthropic.claude-3-5-sonnet-20240620-v1:0
+  chat_model: amazon.titan-text-express-v1  # No approval required
 
 # CloudWatch Alarms Configuration
 alarms:

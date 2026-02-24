@@ -14,13 +14,13 @@ bedrock_runtime = boto3.client(
 cloudwatch = boto3.client("cloudwatch", region_name=os.environ.get("AWS_REGION"))
 
 EMBED_MODEL_ID = "amazon.titan-embed-text-v1"
-CHAT_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"  # Updated to Claude 3.5 Sonnet
+CHAT_MODEL_ID = "amazon.titan-text-express-v1"  # Titan Text (no approval needed)
 PROJECT_NAME = os.environ.get("PROJECT_NAME", "rag-genai")
 
 # Approximate cost per 1,000 tokens (update with real AWS pricing)
 MODEL_PRICING = {
     EMBED_MODEL_ID: 0.0001,  # Titan Embeddings
-    CHAT_MODEL_ID: 0.003     # Claude 3.5 Sonnet (input tokens)
+    CHAT_MODEL_ID: 0.0002    # Titan Text Express
 }
 
 # DynamoDB table to log costs
@@ -102,33 +102,30 @@ def generate_embedding(text: str, tenant_id: str = "default") -> list:
 
 
 def generate_chat_completion(prompt: str, tenant_id: str = "default") -> str:
-    """Generate chat completion using Claude 3.5 Sonnet"""
+    """Generate chat completion using Amazon Titan Text"""
     response = bedrock_runtime.invoke_model(
         modelId=CHAT_MODEL_ID,
         body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 500,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": 0.3
+            "inputText": prompt,
+            "textGenerationConfig": {
+                "maxTokenCount": 500,
+                "temperature": 0.3,
+                "topP": 0.9
+            }
         }),
         contentType="application/json"
     )
 
     body = json.loads(response["body"].read())
     
-    # Claude 3 response format
-    answer = ""
-    if "content" in body and len(body["content"]) > 0:
-        answer = body["content"][0].get("text", "")
+    # Titan response format
+    results = body.get("results", [])
+    answer = results[0].get("outputText", "") if results else ""
     
     # Extract token usage
-    usage = body.get("usage", {})
-    tokens_used = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+    input_tokens = body.get("inputTextTokenCount", 0)
+    output_tokens = results[0].get("tokenCount", 0) if results else 0
+    tokens_used = input_tokens + output_tokens
     
     _log_cost(CHAT_MODEL_ID, tokens_used, tenant_id)
 
