@@ -32,9 +32,6 @@ jobs:
       contents: read
       pull-requests: write
     # Required for OIDC authentication
-    permissions:
-      id-token: write
-      contents: read
     
     defaults:
       run:
