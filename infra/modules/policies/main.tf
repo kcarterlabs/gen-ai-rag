@@ -17,7 +17,7 @@ resource "aws_iam_policy" "bedrock_invoke" {
         ]
         Resource = [
           "arn:aws:bedrock:${var.region}::foundation-model/amazon.titan-embed-text-v1",
-          "arn:aws:bedrock:${var.region}::foundation-model/anthropic.claude-v2"
+          "arn:aws:bedrock:${var.region}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
         ]
       }
     ]
