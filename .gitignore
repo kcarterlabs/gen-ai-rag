@@ -80,3 +80,10 @@ secrets.yml
 
 # OS
 Thumbs.db
+
+# Lambda deployment artifacts
+lambda.zip
+lambda_package/
+infra/lambda.zip
+*.pyc
+__pycache__/
