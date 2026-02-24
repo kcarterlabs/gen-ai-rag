@@ -1,5 +1,13 @@
 terraform {
   required_version = ">= 1.5.0"
+  
+  backend "s3" {
+    bucket         = "rag-genai-terraform-state-856817629634"
+    key            = "terraform.tfstate"
+    region         = "us-west-2"
+    dynamodb_table = "rag-genai-terraform-locks"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
