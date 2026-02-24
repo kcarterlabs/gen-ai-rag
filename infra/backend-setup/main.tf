@@ -4,7 +4,7 @@
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -51,10 +51,10 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 
   tags = {
-    Name        = local.state_bucket
-    Purpose     = "terraform-state"
-    Project     = var.project_name
-    ManagedBy   = "terraform"
+    Name      = local.state_bucket
+    Purpose   = "terraform-state"
+    Project   = var.project_name
+    ManagedBy = "terraform"
   }
 }
 

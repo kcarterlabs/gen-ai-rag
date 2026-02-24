@@ -5,7 +5,7 @@
 resource "aws_apigatewayv2_api" "rag_api" {
   name          = "${var.project_name}-api"
   protocol_type = "HTTP"
-  
+
   cors_configuration {
     allow_origins = var.cors_allow_origins
     allow_methods = var.cors_allow_methods
@@ -33,14 +33,14 @@ resource "aws_apigatewayv2_stage" "default" {
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_gateway.arn
     format = jsonencode({
-      requestId      = "$context.requestId"
-      ip             = "$context.identity.sourceIp"
-      requestTime    = "$context.requestTime"
-      httpMethod     = "$context.httpMethod"
-      routeKey       = "$context.routeKey"
-      status         = "$context.status"
-      protocol       = "$context.protocol"
-      responseLength = "$context.responseLength"
+      requestId        = "$context.requestId"
+      ip               = "$context.identity.sourceIp"
+      requestTime      = "$context.requestTime"
+      httpMethod       = "$context.httpMethod"
+      routeKey         = "$context.routeKey"
+      status           = "$context.status"
+      protocol         = "$context.protocol"
+      responseLength   = "$context.responseLength"
       integrationError = "$context.integrationErrorMessage"
     })
   }
@@ -74,7 +74,7 @@ resource "aws_apigatewayv2_integration" "chat" {
   api_id           = aws_apigatewayv2_api.rag_api.id
   integration_type = "AWS_PROXY"
   integration_uri  = var.chat_lambda_invoke_arn
-  
+
   payload_format_version = "2.0"
   timeout_milliseconds   = 30000
 }

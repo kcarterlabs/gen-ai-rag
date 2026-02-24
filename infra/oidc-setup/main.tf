@@ -4,7 +4,7 @@
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -43,7 +43,7 @@ variable "trust_policy_mode" {
   description = "OIDC trust policy mode: 'main-only' (most secure), 'all-branches' (flexible), or 'specific-branches' (balanced)"
   type        = string
   default     = "main-only"
-  
+
   validation {
     condition     = contains(["main-only", "all-branches", "specific-branches"], var.trust_policy_mode)
     error_message = "Trust policy mode must be one of: main-only, all-branches, specific-branches."
@@ -66,20 +66,20 @@ data "aws_caller_identity" "current" {}
 data "aws_iam_policy_document" "github_oidc_trust_main_only" {
   statement {
     effect = "Allow"
-    
+
     principals {
       type        = "Federated"
       identifiers = [aws_iam_openid_connect_provider.github.arn]
     }
-    
+
     actions = ["sts:AssumeRoleWithWebIdentity"]
-    
+
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
-    
+
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
@@ -92,20 +92,20 @@ data "aws_iam_policy_document" "github_oidc_trust_main_only" {
 data "aws_iam_policy_document" "github_oidc_trust_all_branches" {
   statement {
     effect = "Allow"
-    
+
     principals {
       type        = "Federated"
       identifiers = [aws_iam_openid_connect_provider.github.arn]
     }
-    
+
     actions = ["sts:AssumeRoleWithWebIdentity"]
-    
+
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
-    
+
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
@@ -118,24 +118,24 @@ data "aws_iam_policy_document" "github_oidc_trust_all_branches" {
 data "aws_iam_policy_document" "github_oidc_trust_specific_branches" {
   statement {
     effect = "Allow"
-    
+
     principals {
       type        = "Federated"
       identifiers = [aws_iam_openid_connect_provider.github.arn]
     }
-    
+
     actions = ["sts:AssumeRoleWithWebIdentity"]
-    
+
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
-    
+
     condition {
       test     = "ForAnyValue:StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = concat(
+      values = concat(
         [for branch in var.allowed_branches : "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${branch}"],
         ["repo:${var.github_org}/${var.github_repo}:pull_request"]
       )
@@ -175,7 +175,7 @@ data "aws_iam_policy_document" "terraform_permissions" {
     ]
     resources = ["*"]
   }
-  
+
   # S3 permissions
   statement {
     sid    = "TerraformS3"
@@ -202,7 +202,7 @@ data "aws_iam_policy_document" "terraform_permissions" {
     ]
     resources = ["*"]
   }
-  
+
   # DynamoDB permissions
   statement {
     sid    = "TerraformDynamoDB"
@@ -221,7 +221,7 @@ data "aws_iam_policy_document" "terraform_permissions" {
     ]
     resources = ["*"]
   }
-  
+
   # API Gateway permissions
   statement {
     sid    = "TerraformAPIGateway"
@@ -236,7 +236,7 @@ data "aws_iam_policy_document" "terraform_permissions" {
     ]
     resources = ["*"]
   }
-  
+
   # IAM permissions
   statement {
     sid    = "TerraformIAM"
@@ -264,7 +264,7 @@ data "aws_iam_policy_document" "terraform_permissions" {
     ]
     resources = ["*"]
   }
-  
+
   # CloudWatch permissions
   statement {
     sid    = "TerraformCloudWatch"
@@ -286,7 +286,7 @@ data "aws_iam_policy_document" "terraform_permissions" {
     ]
     resources = ["*"]
   }
-  
+
   # SNS permissions
   statement {
     sid    = "TerraformSNS"
@@ -305,7 +305,7 @@ data "aws_iam_policy_document" "terraform_permissions" {
     ]
     resources = ["*"]
   }
-  
+
   # STS permissions
   statement {
     sid       = "TerraformSTSCallerIdentity"
@@ -321,21 +321,21 @@ data "aws_iam_policy_document" "terraform_permissions" {
 
 resource "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
-  
+
   client_id_list = [
     "sts.amazonaws.com"
   ]
-  
+
   thumbprint_list = [
     "6938fd4d98bab03faadb97b34396831e3780aea1",
     "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
   ]
-  
+
   tags = {
-    Name        = "GitHubActions-OIDC"
-    Purpose     = "GitHub Actions authentication"
-    Repository  = "${var.github_org}/${var.github_repo}"
-    ManagedBy   = "Terraform"
+    Name       = "GitHubActions-OIDC"
+    Purpose    = "GitHub Actions authentication"
+    Repository = "${var.github_org}/${var.github_repo}"
+    ManagedBy  = "Terraform"
   }
 }
 
@@ -344,11 +344,11 @@ resource "aws_iam_openid_connect_provider" "github" {
 # ========================
 
 resource "aws_iam_role" "github_actions_terraform" {
-  name               = "GitHubActionsRAGTerraformRole"
-  assume_role_policy = local.trust_policy
-  description        = "OIDC role for GitHub Actions to deploy RAG infrastructure via Terraform"
-  max_session_duration = 3600  # 1 hour
-  
+  name                 = "GitHubActionsRAGTerraformRole"
+  assume_role_policy   = local.trust_policy
+  description          = "OIDC role for GitHub Actions to deploy RAG infrastructure via Terraform"
+  max_session_duration = 3600 # 1 hour
+
   tags = {
     Name       = "GitHubActionsRAGTerraformRole"
     Purpose    = "Terraform deployment from GitHub Actions"
@@ -365,7 +365,7 @@ resource "aws_iam_policy" "github_actions_terraform" {
   name        = "GitHubActionsRAGTerraformPolicy"
   description = "Permissions for Terraform to manage RAG infrastructure"
   policy      = data.aws_iam_policy_document.terraform_permissions.json
-  
+
   tags = {
     Name      = "GitHubActionsRAGTerraformPolicy"
     Purpose   = "Terraform permissions"

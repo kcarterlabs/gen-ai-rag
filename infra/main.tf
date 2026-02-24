@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.5.0"
-  
+
   backend "s3" {
     bucket         = "rag-genai-terraform-state-856817629634"
     key            = "terraform.tfstate"
@@ -111,7 +111,7 @@ module "lambda" {
   memory_size             = local.config.lambda.memory
   log_retention_days      = local.config.lambda.log_retention_days
   deployment_package_path = "${path.module}/lambda.zip"
-  
+
   environment_variables = {
     VECTOR_BUCKET = module.storage.bucket_name
     COST_TABLE    = module.database.table_name
