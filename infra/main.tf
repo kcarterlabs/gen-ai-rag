@@ -103,9 +103,8 @@ module "lambda" {
   memory_size             = local.config.lambda.memory
   log_retention_days      = local.config.lambda.log_retention_days
   deployment_package_path = "${path.module}/lambda.zip"
-
+  
   environment_variables = {
-    AWS_REGION    = local.config.region
     VECTOR_BUCKET = module.storage.bucket_name
     COST_TABLE    = module.database.table_name
   }
