@@ -1,0 +1,134 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '*.py'
+      - 'requirements.txt'
+      - '.github/workflows/terraform-deploy.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+  workflow_dispatch:  # Allow manual triggers
+
+env:
+  AWS_REGION: us-west-2
+  TF_VERSION: 1.5.0
+
+jobs:
+  terraform:
+    name: Terraform Plan & Apply
+    runs-on: ubuntu-latest
+    
+    # Add environment protection rules in GitHub repo settings
+    environment: production
+    
+    # Required for OIDC authentication
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    
+    defaults:
+      run:
+        working-directory: ./infra
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-RAG-Terraform
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+      
+      - name: Terraform Plan
+        id: plan
+        env:
+          TF_VAR_alarm_email: ${{ secrets.ALARM_EMAIL }}
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: false
+      
+      - name: Comment Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            
+            <details><summary>Show Plan</summary>
+            
+            \`\`\`terraform
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+            
+            </details>
+            
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+      
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          TF_VAR_alarm_email: ${{ secrets.ALARM_EMAIL }}
+        run: terraform apply -auto-approve tfplan
+      
+      - name: Package Lambda
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: .
+        run: |
+          pip install -r requirements.txt -t ./lambda_package
+          cp *.py ./lambda_package/
+          cd lambda_package
+          zip -r ../infra/lambda.zip .
+      
+      - name: Update Lambda Functions
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          CHAT_FUNCTION=$(terraform output -raw chat_lambda_name)
+          INGEST_FUNCTION=$(terraform output -raw ingest_lambda_name)
+          
+          aws lambda update-function-code \
+            --function-name $CHAT_FUNCTION \
+            --zip-file fileb://lambda.zip \
+            --region ${{ env.AWS_REGION }}
+          
+          aws lambda update-function-code \
+            --function-name $INGEST_FUNCTION \
+            --zip-file fileb://lambda.zip \
+            --region ${{ env.AWS_REGION }}
+          
+          echo "✅ Lambda functions updated successfully"

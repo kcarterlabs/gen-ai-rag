@@ -1,0 +1,72 @@
+project_name: rag-genai
+region: us-west-2
+
+# S3 Configuration
+s3:
+  vector_bucket: rag-genai-vectors
+  enable_versioning: true
+  encryption_algorithm: AES256
+  block_public_access: true
+  upload_prefix: uploads/
+
+# DynamoDB Configuration
+dynamodb:
+  table_name: rag-genai-costs
+  billing_mode: PAY_PER_REQUEST
+  hash_key: tenant_id
+  range_key: timestamp
+  enable_point_in_time_recovery: true
+
+# Lambda Configuration
+lambda:
+  runtime: python3.11
+  memory: 512
+  timeout: 30
+  log_retention_days: 7
+
+# API Gateway Configuration
+api_gateway:
+  log_retention_days: 7
+  cors:
+    allow_origins:
+      - "*"
+    allow_methods:
+      - POST
+      - GET
+      - OPTIONS
+    allow_headers:
+      - content-type
+      - authorization
+      - x-request-id
+    max_age: 300
+
+# IAM Configuration
+iam:
+  lambda_role_name: rag-genai-lambda-role
+
+# Bedrock Configuration
+bedrock:
+  embedding_model: amazon.titan-embed-text-v1
+  chat_model: anthropic.claude-v2
+
+# CloudWatch Alarms Configuration
+alarms:
+  # alarm_email is now set via Terraform variable (TF_VAR_alarm_email)
+  # For local testing: export TF_VAR_alarm_email="your.email@example.com"
+  # For GitHub Actions: Set ALARM_EMAIL repository secret
+  lambda_error_threshold: 5
+  lambda_duration_threshold_ms: 24000  # 80% of 30s timeout
+  lambda_concurrent_executions_threshold: 50
+  api_4xx_error_threshold: 20
+  api_5xx_error_threshold: 5
+  api_latency_threshold_ms: 5000
+  token_usage_threshold_per_hour: 1000000  # 1M tokens/hour
+  enable_token_usage_alarm: true
+  enable_composite_alarm: true
+
+# Tags
+tags:
+  Environment: production
+  ManagedBy: terraform
+  Project: rag-genai
+

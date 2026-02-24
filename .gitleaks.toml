@@ -1,0 +1,25 @@
+# Gitleaks configuration
+# https://github.com/gitleaks/gitleaks
+
+title = "Gitleaks Configuration for RAG GenAI"
+
+# Allowlisted files/paths
+[allowlist]
+  description = "Allowlist for test files and known false positives"
+  
+  # Allowlist test files with mock credentials
+  paths = [
+    '''test_local\.py''',          # Contains test/mock AWS credentials
+    '''simple_test\.py''',         # Test file
+    '''test_infrastructure\.py''', # Test file
+  ]
+  
+  # Allowlist specific patterns that are safe
+  regexes = [
+    '''test''',                    # Test credentials
+    '''example''',                 # Example values
+    '''sample''',                  # Sample data
+  ]
+
+# Additional rules can be configured here
+# See: https://github.com/gitleaks/gitleaks#configuration

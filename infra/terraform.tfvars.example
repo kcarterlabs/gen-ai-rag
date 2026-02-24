@@ -1,0 +1,12 @@
+# Example Terraform Variables
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to git (it's in .gitignore)
+
+# Required: Email for CloudWatch alarm notifications
+alarm_email = "your.email@example.com"
+
+# Optional: Override AWS region from config.yaml
+# aws_region = "us-east-1"
+
+# Optional: Set environment name
+# environment = "production"
