@@ -13,6 +13,16 @@ variable "chat_lambda_function_name" {
   type        = string
 }
 
+variable "ingest_lambda_invoke_arn" {
+  description = "Invoke ARN of the ingest Lambda function"
+  type        = string
+}
+
+variable "ingest_lambda_function_name" {
+  description = "Name of the ingest Lambda function"
+  type        = string
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log retention in days"
   type        = number

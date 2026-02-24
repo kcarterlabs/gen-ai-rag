@@ -13,6 +13,26 @@ output "chat_url" {
 }
 
 # ========================
+# API Access Credentials
+# ========================
+
+output "api_user_name" {
+  description = "IAM user for API authentication"
+  value       = module.api_access.api_user_name
+}
+
+output "api_access_key_id" {
+  description = "Access key ID (use AWS_ACCESS_KEY_ID)"
+  value       = module.api_access.api_access_key_id
+}
+
+output "api_secret_access_key" {
+  description = "Secret access key (use AWS_SECRET_ACCESS_KEY)"
+  value       = module.api_access.api_secret_access_key
+  sensitive   = true
+}
+
+# ========================
 # Lambda Outputs
 # ========================
 

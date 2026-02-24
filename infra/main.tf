@@ -130,15 +130,30 @@ module "lambda" {
 module "api_gateway" {
   source = "./modules/api_gateway"
 
-  project_name              = local.config.project_name
-  chat_lambda_invoke_arn    = module.lambda.chat_invoke_arn
-  chat_lambda_function_name = module.lambda.chat_function_name
-  log_retention_days        = local.config.api_gateway.log_retention_days
+  project_name                = local.config.project_name
+  chat_lambda_invoke_arn      = module.lambda.chat_invoke_arn
+  chat_lambda_function_name   = module.lambda.chat_function_name
+  ingest_lambda_invoke_arn    = module.lambda.ingest_invoke_arn
+  ingest_lambda_function_name = module.lambda.ingest_function_name
+  log_retention_days          = local.config.api_gateway.log_retention_days
 
   cors_allow_origins = local.config.api_gateway.cors.allow_origins
   cors_allow_methods = local.config.api_gateway.cors.allow_methods
   cors_allow_headers = local.config.api_gateway.cors.allow_headers
   cors_max_age       = local.config.api_gateway.cors.max_age
+
+  tags = local.common_tags
+}
+
+# ========================
+# API Access Module (IAM-based authentication)
+# ========================
+
+module "api_access" {
+  source = "./modules/api_access"
+
+  project_name      = local.config.project_name
+  api_execution_arn = module.api_gateway.api_execution_arn
 
   tags = local.common_tags
 }

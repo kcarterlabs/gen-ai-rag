@@ -83,6 +83,29 @@ resource "aws_apigatewayv2_route" "chat" {
   api_id    = aws_apigatewayv2_api.rag_api.id
   route_key = "POST /chat"
   target    = "integrations/${aws_apigatewayv2_integration.chat.id}"
+  
+  authorization_type = "AWS_IAM"
+}
+
+# ========================
+# Ingest Endpoint Integration
+# ========================
+
+resource "aws_apigatewayv2_integration" "ingest" {
+  api_id           = aws_apigatewayv2_api.rag_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = var.ingest_lambda_invoke_arn
+
+  payload_format_version = "2.0"
+  timeout_milliseconds   = 30000
+}
+
+resource "aws_apigatewayv2_route" "ingest" {
+  api_id    = aws_apigatewayv2_api.rag_api.id
+  route_key = "POST /ingest"
+  target    = "integrations/${aws_apigatewayv2_integration.ingest.id}"
+  
+  authorization_type = "AWS_IAM"
 }
 
 # ========================
@@ -93,6 +116,14 @@ resource "aws_lambda_permission" "api_gateway_chat" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = var.chat_lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.rag_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_ingest" {
+  statement_id  = "AllowAPIGatewayInvokeIngest"
+  action        = "lambda:InvokeFunction"
+  function_name = var.ingest_lambda_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.rag_api.execution_arn}/*/*"
 }
