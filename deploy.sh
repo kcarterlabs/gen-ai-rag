@@ -22,10 +22,14 @@ cd build
 # Copy Python files
 cp ../*.py .
 
-# Install dependencies
+# Install dependencies compatible with Lambda runtime (Amazon Linux 2)
 if [ -s ../requirements.txt ]; then
-    echo "Installing dependencies..."
-    pip install -r ../requirements.txt -t .
+    echo "Installing dependencies for Lambda runtime (Amazon Linux 2)..."
+    pip install -r ../requirements.txt -t . \
+        --platform manylinux2014_x86_64 \
+        --only-binary=:all: \
+        --python-version 3.11 \
+        --implementation cp
 else
     echo "No dependencies to install (requirements.txt is empty)"
 fi

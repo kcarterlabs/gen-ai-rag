@@ -62,7 +62,7 @@ def lambda_handler(event, context):
         for idx, chunk in enumerate(chunks):
             try:
                 # Generate embedding
-                embedding = generate_embedding(chunk["text"])
+                embedding = generate_embedding(chunk["text"], tenant_id)
                 
                 # Store vector with tenant isolation
                 store_vector(

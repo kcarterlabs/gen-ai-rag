@@ -68,7 +68,7 @@ def lambda_handler(event, context):
         
         # Step 1: Embed query
         sec_context.log_action("embedding_generation_start")
-        query_embedding = generate_embedding(safe_question)
+        query_embedding = generate_embedding(safe_question, tenant_id)
         sec_context.log_action("embedding_generation_complete")
         
         # Step 2: Retrieve top-k similar chunks (with tenant isolation)
@@ -87,7 +87,7 @@ def lambda_handler(event, context):
         
         # Step 4: Generate chat response
         sec_context.log_action("llm_generation_start")
-        answer = generate_chat_completion(prompt)
+        answer = generate_chat_completion(prompt, tenant_id)
         sec_context.log_action("llm_generation_complete")
         
         # Step 5: Sanitize output
