@@ -14,13 +14,13 @@ bedrock_runtime = boto3.client(
 cloudwatch = boto3.client("cloudwatch", region_name=os.environ.get("AWS_REGION"))
 
 EMBED_MODEL_ID = "amazon.titan-embed-text-v1"
-CHAT_MODEL_ID = "amazon.titan-text-express-v1"  # Titan Text (no approval needed)
+CHAT_MODEL_ID = "meta.llama3-8b-instruct-v1:0"  # Meta Llama 3 8B (ACTIVE)
 PROJECT_NAME = os.environ.get("PROJECT_NAME", "rag-genai")
 
 # Approximate cost per 1,000 tokens (update with real AWS pricing)
 MODEL_PRICING = {
     EMBED_MODEL_ID: 0.0001,  # Titan Embeddings
-    CHAT_MODEL_ID: 0.0002    # Titan Text Express
+    CHAT_MODEL_ID: 0.0003    # Llama 3 8B
 }
 
 # DynamoDB table to log costs
@@ -102,30 +102,28 @@ def generate_embedding(text: str, tenant_id: str = "default") -> list:
 
 
 def generate_chat_completion(prompt: str, tenant_id: str = "default") -> str:
-    """Generate chat completion using Amazon Titan Text"""
+    """Generate chat completion using Meta Llama 3"""
+    print(f"[DEBUG] Using model: {CHAT_MODEL_ID}")
     response = bedrock_runtime.invoke_model(
         modelId=CHAT_MODEL_ID,
         body=json.dumps({
-            "inputText": prompt,
-            "textGenerationConfig": {
-                "maxTokenCount": 500,
-                "temperature": 0.3,
-                "topP": 0.9
-            }
+            "prompt": prompt,
+            "max_gen_len": 500,
+            "temperature": 0.3,
+            "top_p": 0.9
         }),
         contentType="application/json"
     )
 
     body = json.loads(response["body"].read())
     
-    # Titan response format
-    results = body.get("results", [])
-    answer = results[0].get("outputText", "") if results else ""
+    # Llama response format
+    answer = body.get("generation", "")
     
     # Extract token usage
-    input_tokens = body.get("inputTextTokenCount", 0)
-    output_tokens = results[0].get("tokenCount", 0) if results else 0
-    tokens_used = input_tokens + output_tokens
+    prompt_tokens = body.get("prompt_token_count", 0)
+    generation_tokens = body.get("generation_token_count", 0)
+    tokens_used = prompt_tokens + generation_tokens
     
     _log_cost(CHAT_MODEL_ID, tokens_used, tenant_id)
 

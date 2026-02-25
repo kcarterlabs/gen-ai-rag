@@ -17,7 +17,7 @@ resource "aws_iam_policy" "bedrock_invoke" {
         ]
         Resource = [
           "arn:aws:bedrock:${var.region}::foundation-model/amazon.titan-embed-text-v1",
-          "arn:aws:bedrock:${var.region}::foundation-model/amazon.titan-text-express-v1"
+          "arn:aws:bedrock:${var.region}::foundation-model/meta.llama3-8b-instruct-v1:0"
         ]
       }
     ]

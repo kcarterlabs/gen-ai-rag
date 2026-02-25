@@ -1,0 +1,8 @@
+{
+  "version": "2.0",
+  "routeKey": "POST /chat",
+  "body": "{\"question\": \"What is RAG?\", \"tenant_id\": \"test\"}",
+  "requestContext": {
+    "requestId": "test123"
+  }
+}
